@@ -27,7 +27,9 @@ def is_translatable(entry):
 @click.option('--private-key', default=None, envvar='GENGO_PRIVATE_KEY')
 @click.option('--sandbox/--no-sandbox', default=True)
 @click.option('--debug/--no-debug', default=False)
-def cli(pofile, source, target, tier, public_key, private_key, sandbox, debug):
+@click.option('--limit', default=None, help="Limits the number of jobs")
+def cli(pofile, source, target, tier,
+        public_key, private_key, sandbox, debug, limit):
     """ Takes the given pofile and submits its entries to the gengo API for
     translation. Translated strings are acquired once they are translated
     and stored in the pofile.
@@ -103,6 +105,9 @@ def cli(pofile, source, target, tier, public_key, private_key, sandbox, debug):
                 'lc_tgt': target,
                 'tier': tier,
             })
+
+            if limit and len(jobs) == limit:
+                break
 
     result = gengo.postTranslationJobs(jobs={'jobs': {
         'job_{}'.format(ix): job for ix, job in enumerate(jobs)
