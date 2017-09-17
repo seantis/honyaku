@@ -32,7 +32,7 @@ def cli(pofile, source, target, tier, public_key, private_key, sandbox, debug):
     translation. Translated strings are acquired once they are translated
     and stored in the pofile.
 
-    The state of the translations is kept by hasing the strings that should
+    The state of the translations is kept by hashing the strings that should
     be translated. If the strings change the translation won't be matched
     again. As a result you should not change the pofile while the translation
     job is still underway.
