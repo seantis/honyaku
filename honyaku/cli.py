@@ -21,13 +21,18 @@ def is_translatable(entry):
 @click.argument('pofile')
 @click.argument('source')
 @click.argument('target')
-@click.option(
-    '--tier', default='standard', type=click.Choice(('standard', 'pro')))
-@click.option('--public-key', default=None, envvar='GENGO_PUBLIC_KEY')
-@click.option('--private-key', default=None, envvar='GENGO_PRIVATE_KEY')
-@click.option('--sandbox/--no-sandbox', default=True)
-@click.option('--debug/--no-debug', default=False)
-@click.option('--limit', default=None, help="Limits the number of jobs")
+@click.option('--tier',
+              default='standard', type=click.Choice(('standard', 'pro')))
+@click.option('--public-key',
+              default=None, envvar='GENGO_PUBLIC_KEY')
+@click.option('--private-key',
+              default=None, envvar='GENGO_PRIVATE_KEY')
+@click.option('--sandbox/--no-sandbox',
+              default=False, help="Send requests to the gengo sandbox.")
+@click.option('--debug/--no-debug',
+              default=False, help="Enables gengo debugging.")
+@click.option('--limit',
+              default=None, help="Limits the number of jobs.", type=click.INT)
 def cli(pofile, source, target, tier,
         public_key, private_key, sandbox, debug, limit):
     """ Takes the given pofile and submits its entries to the gengo API for
