@@ -58,19 +58,20 @@ def cli(pofile, source, target, tier,
         sandbox=sandbox,
         debug=debug)
 
+    def fetch_order_jobs(order_id):
+        return gengo.getTranslationOrderJobs(id=order_id)['response']['order']
+
     def is_order_complete(order_id):
-        order_id = int(order_id)
-        order = gengo.getTranslationOrderJobs(id=order_id)['response']['order']
-        return len(order['jobs_approved']) == int(order['total_jobs'])
+        jobs = fetch_order_jobs(order_id)
+        return len(jobs['jobs_approved']) == int(jobs['total_jobs'])
 
     def fetch_translations(order_id):
-        order_id = int(order_id)
-        order = gengo.getTranslationOrderJobs(id=order_id)['response']['order']
+        jobs = fetch_order_jobs(order_id)
 
         results = {}
 
-        for job_id in order['jobs_approved']:
-            job = gengo.getTranslationJob(id=int(job_id))['response']['job']
+        for job_id in jobs['jobs_approved']:
+            job = gengo.getTranslationJob(id=job_id)['response']['job']
             results[job['slug']] = job['body_tgt']
 
         return results
@@ -83,22 +84,64 @@ def cli(pofile, source, target, tier,
 
     if order_id:
         if not is_order_complete(order_id):
-            # XXX add the ability to review translations quickly
-            print("The file is being translated")
-            return
-        else:
-            translations = fetch_translations(order_id)
+            reviewable = fetch_order_jobs(order_id)['jobs_reviewable']
 
-            for entry in pofile:
-                entry_id = identify_entry(entry)
+            for job_id in reviewable:
+                job = gengo.getTranslationJob(id=job_id)['response']['job']
+                print(">", job['body_src'])
+                print(">", job['body_tgt'])
+                print("")
 
-                if entry_id in translations:
-                    entry.msgstr = translations[entry_id]
+                answer = None
+                while answer not in ('a', 'r', 'q'):
 
-            del pofile.metadata['gengo-order-id']
-            pofile.save()
+                    answer = input(
+                        "(a)ccept translation, (r)evise it or (q)uit? ")
 
-            return
+                    answer = answer[0]
+
+                if answer == 'q':
+                    return
+
+                if answer == 'a':
+                    gengo.updateTranslationJob(
+                        id=job_id,
+                        action={
+                            'action': 'approve',
+                        }
+                    )
+                    continue
+
+                if answer == 'r':
+                    comment = input("comment for the translator: ")
+                    gengo.updateTranslationJob(
+                        id=job_id,
+                        action={
+                            'action': 'revise',
+                            'comment': comment
+                        }
+                    )
+                    continue
+
+            if not is_order_complete(order_id):
+                print("")
+                print("Order is not yet complete")
+                return
+
+        translations = fetch_translations(order_id)
+
+        for entry in pofile:
+            entry_id = identify_entry(entry)
+
+            if entry_id in translations:
+                entry.msgstr = translations[entry_id]
+
+        del pofile.metadata['gengo-order-id']
+        pofile.save()
+
+        print("")
+        print("Translation has been completed")
+        return
 
     for entry in pofile:
         if is_translatable(entry):
