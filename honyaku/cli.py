@@ -17,6 +17,10 @@ def is_translatable(entry):
     return entry.msgid and VALID_MSG.match(entry.msgid)
 
 
+def is_translated(entry):
+    return entry.msgstr.strip() and True or False
+
+
 @click.command()
 @click.argument('pofile')
 @click.argument('source')
@@ -33,8 +37,12 @@ def is_translatable(entry):
               default=False, help="Enables gengo debugging.")
 @click.option('--limit',
               default=None, help="Limits the number of jobs.", type=click.INT)
+@click.option('--comment',
+              default=None, help="Comment to add to all jobs")
+@click.option('--tone',
+              default=None, help="Tone of the translation")
 def cli(pofile, source, target, tier,
-        public_key, private_key, sandbox, debug, limit):
+        public_key, private_key, sandbox, debug, limit, comment, tone):
     """ Takes the given pofile and submits its entries to the gengo API for
     translation. Translated strings are acquired once they are translated
     and stored in the pofile.
@@ -144,7 +152,7 @@ def cli(pofile, source, target, tier,
         return
 
     for entry in pofile:
-        if is_translatable(entry):
+        if is_translatable(entry) and not is_translated(entry):
             jobs.append({
                 'type': 'text',
                 'slug': identify_entry(entry),
@@ -152,6 +160,8 @@ def cli(pofile, source, target, tier,
                 'lc_src': source,
                 'lc_tgt': target,
                 'tier': tier,
+                'comment': comment,
+                'tone': tone,
             })
 
             if limit and len(jobs) == limit:
