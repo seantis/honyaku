@@ -21,6 +21,13 @@ def is_translated(entry):
     return entry.msgstr.strip() and True or False
 
 
+def fits_words_boundary(entry, min_count, max_count):
+    min_count = min_count or float('-inf')
+    max_count = max_count or float('inf')
+
+    return min_count <= len(entry.msgid.split()) <= max_count
+
+
 @click.command()
 @click.argument('pofile')
 @click.argument('source')
@@ -41,8 +48,14 @@ def is_translated(entry):
               default=None, help="Comment to add to all jobs")
 @click.option('--tone',
               default=None, help="Tone of the translation")
-def cli(pofile, source, target, tier,
-        public_key, private_key, sandbox, debug, limit, comment, tone):
+@click.option('--min-words',
+              default=None, type=click.INT,
+              help="Minimum number of words in a sentence")
+@click.option('--max-words',
+              default=None, type=click.INT,
+              help="Maximum number of words in sentence")
+def cli(pofile, source, target, tier, public_key, private_key, sandbox, debug,
+        limit, comment, tone, min_words, max_words):
     """ Takes the given pofile and submits its entries to the gengo API for
     translation. Translated strings are acquired once they are translated
     and stored in the pofile.
@@ -153,19 +166,20 @@ def cli(pofile, source, target, tier,
 
     for entry in pofile:
         if is_translatable(entry) and not is_translated(entry):
-            jobs.append({
-                'type': 'text',
-                'slug': identify_entry(entry),
-                'body_src': entry.msgid,
-                'lc_src': source,
-                'lc_tgt': target,
-                'tier': tier,
-                'comment': comment,
-                'tone': tone,
-            })
+            if fits_words_boundary(entry, min_words, max_words):
+                jobs.append({
+                    'type': 'text',
+                    'slug': identify_entry(entry),
+                    'body_src': entry.msgid,
+                    'lc_src': source,
+                    'lc_tgt': target,
+                    'tier': tier,
+                    'comment': comment,
+                    'tone': tone,
+                })
 
-            if limit and len(jobs) == limit:
-                break
+                if limit and len(jobs) == limit:
+                    break
 
     result = gengo.postTranslationJobs(jobs={'jobs': {
         'job_{}'.format(ix): job for ix, job in enumerate(jobs)
