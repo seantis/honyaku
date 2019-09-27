@@ -42,8 +42,8 @@ def patch_security_issue():
 
         return patched
 
-    import requests
-    requests.request = with_forced_verify(requests.request)
+    import requests.api
+    requests.api.request = with_forced_verify(requests.api.request)
 
 
 @click.command()
