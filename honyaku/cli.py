@@ -1,8 +1,9 @@
 import click
+import functools
 import hashlib
 import polib
 import re
-import functools
+import shutil
 
 
 VALID_MSG = re.compile(r'.*[a-zA-Z]+.*')
@@ -130,11 +131,17 @@ def cli(pofile, source, target, tier, public_key, private_key, sandbox, debug,
         if not is_order_complete(order_id):
             reviewable = fetch_order_jobs(order_id)['jobs_reviewable']
 
+            columns = shutil.get_terminal_size((80, 20)).columns
+            single_hr = "-" * columns
+            double_hr = "=" * columns
+
             for job_id in reviewable:
                 job = gengo.getTranslationJob(id=job_id)['response']['job']
-                print(">", job['body_src'])
-                print(">", job['body_tgt'])
-                print("")
+                print(double_hr)
+                print(job['body_src'])
+                print(single_hr)
+                print(job['body_tgt'])
+                print(single_hr)
 
                 answer = None
                 while answer not in ('a', 'r', 'q'):
