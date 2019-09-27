@@ -177,7 +177,6 @@ def cli(pofile, source, target, tier, public_key, private_key, sandbox, debug,
                     continue
 
             if not is_order_complete(order_id):
-                print("")
                 print("Order is not yet complete")
                 return
 
@@ -192,7 +191,6 @@ def cli(pofile, source, target, tier, public_key, private_key, sandbox, debug,
         del pofile.metadata['gengo-order-id']
         pofile.save()
 
-        print("")
         print("Translation has been completed")
         return
 
