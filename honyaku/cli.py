@@ -2,8 +2,7 @@ import click
 import hashlib
 import polib
 import re
-
-from gengo import Gengo
+import functools
 
 
 VALID_MSG = re.compile(r'.*[a-zA-Z]+.*')
@@ -26,6 +25,25 @@ def fits_words_boundary(entry, min_count, max_count):
     max_count = max_count or float('inf')
 
     return min_count <= len(entry.msgid.split()) <= max_count
+
+
+def patch_security_issue():
+    # Gengo has been unable to fix a security issue in 2 years, so we fix it
+    # ourselves, using a monkey-patch.
+    #
+    # See https://github.com/gengo/gengo-python/issues/99
+
+    def with_forced_verify(fn):
+
+        @functools.wraps(fn)
+        def patched(*args, **kwargs):
+            kwargs['verify'] = True
+            return fn(*args, **kwargs)
+
+        return patched
+
+    import requests
+    requests.request = with_forced_verify(requests.request)
 
 
 @click.command()
@@ -70,6 +88,11 @@ def cli(pofile, source, target, tier, public_key, private_key, sandbox, debug,
         honyaku german.po de fr --tier pro
 
     """
+
+    # to make sure that the security issue is patched properly, we do that
+    # before importing Gengo
+    patch_security_issue()
+    from gengo import Gengo
 
     assert public_key and private_key
 
