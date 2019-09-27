@@ -161,6 +161,7 @@ def cli(pofile, source, target, tier, public_key, private_key, sandbox, debug,
                             'action': 'approve',
                         }
                     )
+                    print("")
                     continue
 
                 if answer == 'r':
@@ -172,6 +173,7 @@ def cli(pofile, source, target, tier, public_key, private_key, sandbox, debug,
                             'comment': comment
                         }
                     )
+                    print("")
                     continue
 
             if not is_order_complete(order_id):
