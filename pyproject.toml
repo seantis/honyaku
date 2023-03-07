@@ -1,0 +1,65 @@
+[build-system]
+requires = ["setuptools>=42", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[tool.pytest.ini_options]
+addopts = "-ra -q"
+testpaths = ["tests"]
+norecursedirs = [
+    "*.egg",
+    ".git",
+    ".*",
+    "_*"
+]
+
+[tool.coverage.run]
+branch = true
+
+[tool.coverage.report]
+omit = [
+    "extras/*",
+    "buildout-cache/eggs/*",
+    "parts/*",
+    "eggs/*",
+    "*/test*",
+    "*/test-views/*",
+    "*/distutils/__init__.py"
+]
+
+[tool.tox]
+legacy_tox_ini = """
+[tox]
+envlist = py37,py38,py39,py310,py311,flake8,report
+
+[gh-actions]
+python =
+    3.7: py37
+    3.8: py38
+    3.9: py39
+    3.10: py310,flake8
+    3.11: py311
+
+[testenv]
+passenv = LANG
+setenv =
+    py{37,38,39,310,311}: COVERAGE_FILE = .coverage.{envname}
+commands = pytest --cov --cov-report= {posargs:-vv}
+deps=
+    -e{toxinidir}[test]
+
+[testenv:flake8]
+skip_install = true
+deps = flake8
+commands = flake8 honyaku
+
+[flake8]
+exclude = .venv,.git,.tox,dist,docs,*lib/python*,*egg,build
+
+[testenv:report]
+deps = coverage
+skip_install = true
+commands =
+    coverage combine
+    coverage report
+
+"""
