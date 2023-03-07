@@ -48,9 +48,10 @@ deps=
     -e{toxinidir}[test]
 
 [testenv:flake8]
-skip_install = true
-deps = flake8
-commands = flake8 honyaku
+basepython = python3.10
+deps =
+    flake8
+commands = flake8 honyaku/ tests/
 
 [flake8]
 exclude = .venv,.git,.tox,dist,docs,*lib/python*,*egg,build
