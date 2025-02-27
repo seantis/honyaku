@@ -17,11 +17,11 @@ Honyaku uses the Gengo API with two states:
 1. It creates a translation job and writes the id in the targeted PO file.
 2. It checks the job id and displays each translation for manual acceptance.
 
-To use, store your GENGO public/private key in the following variables:
+To use, store your GENGO public/private key in the following variables. Notice the single quotes:
 
 ```shell
-export GENGO_PUBLIC_KEY="your public key"
-export GENGO_PRIVATE_KEY="your private key"
+export GENGO_PUBLIC_KEY='your public key'
+export GENGO_PRIVATE_KEY='your private key'
 ```
 
 Afterwards initiate a new job as follows:
