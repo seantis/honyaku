@@ -73,8 +73,10 @@ def patch_security_issue():
 @click.option('--max-words',
               default=None, type=click.INT,
               help="Maximum number of words in sentence")
+@click.option('--accept-all/--no-accept-all',
+              default=False, help="Automatically accept all translations")
 def cli(pofile, source, target, tier, public_key, private_key, sandbox, debug,
-        limit, comment, tone, min_words, max_words):
+        limit, comment, tone, min_words, max_words, accept_all):
     """ Takes the given pofile and submits its entries to the gengo API for
     translation. Translated strings are acquired once they are translated
     and stored in the pofile.
@@ -87,6 +89,10 @@ def cli(pofile, source, target, tier, public_key, private_key, sandbox, debug,
     Example:
 
         honyaku german.po de fr --tier pro
+
+    Run with --accept-all to automatically approve all translations:
+
+        honyaku german.po de fr --accept-all
 
     """
 
@@ -131,50 +137,63 @@ def cli(pofile, source, target, tier, public_key, private_key, sandbox, debug,
         if not is_order_complete(order_id):
             reviewable = fetch_order_jobs(order_id)['jobs_reviewable']
 
-            columns = shutil.get_terminal_size((80, 20)).columns
-            single_hr = "-" * columns
-            double_hr = "=" * columns
-
-            for job_id in reviewable:
-                job = gengo.getTranslationJob(id=job_id)['response']['job']
-                print(double_hr)
-                print(job['body_src'])
-                print(single_hr)
-                print(job['body_tgt'])
-                print(single_hr)
-
-                answer = None
-                while answer not in ('a', 'r', 'q'):
-
-                    answer = input(
-                        "(a)ccept translation, (r)evise it or (q)uit? ")
-
-                    answer = answer[0]
-
-                if answer == 'q':
-                    return
-
-                if answer == 'a':
+            if accept_all:
+                # Automatically accept all translations
+                print(f"Auto-accepting {len(reviewable)} translations...")
+                for job_id in reviewable:
                     gengo.updateTranslationJob(
                         id=job_id,
                         action={
                             'action': 'approve',
                         }
                     )
-                    print("")
-                    continue
+                print(f"All {len(reviewable)} translations accepted.")
+            else:
+                # Interactive review process
+                columns = shutil.get_terminal_size((80, 20)).columns
+                single_hr = "-" * columns
+                double_hr = "=" * columns
 
-                if answer == 'r':
-                    comment = input("comment for the translator: ")
-                    gengo.updateTranslationJob(
-                        id=job_id,
-                        action={
-                            'action': 'revise',
-                            'comment': comment
-                        }
-                    )
-                    print("")
-                    continue
+                for job_id in reviewable:
+                    job = gengo.getTranslationJob(id=job_id)['response']['job']
+                    print(double_hr)
+                    print(job['body_src'])
+                    print(single_hr)
+                    print(job['body_tgt'])
+                    print(single_hr)
+
+                    answer = None
+                    while answer not in ('a', 'r', 'q'):
+
+                        answer = input(
+                            "(a)ccept translation, (r)evise it or (q)uit? ")
+
+                        answer = answer[0]
+
+                    if answer == 'q':
+                        return
+
+                    if answer == 'a':
+                        gengo.updateTranslationJob(
+                            id=job_id,
+                            action={
+                                'action': 'approve',
+                            }
+                        )
+                        print("")
+                        continue
+
+                    if answer == 'r':
+                        comment = input("comment for the translator: ")
+                        gengo.updateTranslationJob(
+                            id=job_id,
+                            action={
+                                'action': 'revise',
+                                'comment': comment
+                            }
+                        )
+                        print("")
+                        continue
 
             if not is_order_complete(order_id):
                 print("Order is not yet complete")
